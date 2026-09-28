@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Maarif3D - 1. Sınıf Eğitici Macera Dünyası</title>
+
+  <!-- Google Fonts: Fredoka & Quicksand -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- MediaPipe Hands & Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 3D Three.js Sahnesi -->
+  <div id="canvas-container"></div>
+
+  <!-- Kamera Kutusu -->
+  <div id="camera-feed-box" class="camera-card">
+    <video id="webcam-video" playsinline muted autoplay></video>
+    <canvas id="camera-overlay"></canvas>
+    <div class="camera-status-pill" id="cam-status">
+      <span class="status-dot"></span>
+      <span id="cam-status-text">Kamera Aranıyor...</span>
+    </div>
+  </div>
+
+  <!-- ÜST KULLANICI ARAYÜZÜ (HUD) -->
+  <header id="app-header">
+    <div class="header-left">
+      <button id="btn-back-menu" class="kid-btn icon-btn" title="Ana Haritaya Dön">
+        <i class="fa-solid fa-house"></i>
+      </button>
+      <div class="stage-badge">
+        <span id="current-stage-title">1. Sınıf Maarif Dünyası</span>
+      </div>
+      <a href="index.html" class="kid-btn" style="background: rgba(255,255,255,0.18); color: #fff; text-decoration: none; font-size: 0.95rem; padding: 8px 14px;" title="3 ve 4. Sınıf Oyunlarına Geç">
+        🎒 3-4. Sınıfa Geç <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="header-center">
+      <div class="score-pill">
+        <i class="fa-solid fa-star"></i>
+        <span id="hud-score">0</span>
+      </div>
+      <div class="trophy-pill">
+        <i class="fa-solid fa-trophy"></i>
+        <span id="hud-stars">0 / 12</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button id="btn-toggle-sound" class="kid-btn icon-btn" title="Ses">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
+      <button id="btn-toggle-cam" class="kid-btn icon-btn" title="Kamera / Fare">
+        <i class="fa-solid fa-camera"></i>
+      </button>
+      <button id="btn-help" class="kid-btn icon-btn highlight" title="Yardım">
+        <i class="fa-solid fa-question"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- EL HAREKET GÖSTERGESİ -->
+  <div id="gesture-hud" class="gesture-indicator">
+    <span class="gesture-icon" id="gesture-state-icon"><i class="fa-solid fa-hand"></i></span>
+    <span class="gesture-text" id="gesture-state-text">Elini Kameraya Göster</span>
+  </div>
+
+  <!-- ANA MENÜ / 1. SINIF KAT SEÇİM HARİTASI -->
+  <div id="menu-overlay" class="overlay-screen active">
+    <div class="menu-content">
+      <div class="hero-banner">
+        <div class="grade-tag" style="background: #2563eb;">🎒 1. Sınıf Temaları (Maarif Modeli)</div>
+        <h1>🎈 1. Sınıf 3D Macera Dünyası 🎈</h1>
+        <p class="subtitle">Kameranı aç, elini uzat ve neşeyle öğren!</p>
+      </div>
+
+      <!-- 1. SINIF OYUNLARI GRID -->
+      <div class="levels-grid">
+        <!-- 1. OYUN: HARF & SESLER -->
+        <div class="level-card level-card-1" data-level="letters">
+          <div class="level-badge">Kat 1</div>
+          <div class="level-icon" style="background: #ef4444;"><i class="fa-solid fa-font"></i></div>
+          <h3>Neşeli Harf Balonları</h3>
+          <p>A, E, L, K, İ, N ses balonlarını yakala, patlat ve eğlen!</p>
+          <div class="level-stars" id="stars-level-letters">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+
+        <!-- 2. OYUN: RİTMİK SAYMA -->
+        <div class="level-card level-card-2" data-level="counting">
+          <div class="level-badge">Kat 2</div>
+          <div class="level-icon" style="background: #f97316;"><i class="fa-solid fa-apple-whole"></i></div>
+          <h3>Meyve Bahçesi Sayma</h3>
+          <p>1'den 10'a kadar elma ve portakalları sepete doldur!</p>
+          <div class="level-stars" id="stars-level-counting">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+
+        <!-- 3. OYUN: SAĞLIKLI YAŞAM -->
+        <div class="level-card level-card-3" data-level="hygiene">
+          <div class="level-badge">Kat 3</div>
+          <div class="level-icon" style="background: #22c55e;"><i class="fa-solid fa-carrot"></i></div>
+          <h3>Sağlıklı Tabak</h3>
+          <p>Süt, meyve ve sebzeleri topla, tabağını vitaminle doldur!</p>
+          <div class="level-stars" id="stars-level-hygiene">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+
+        <!-- 4. OYUN: RENKLER -->
+        <div class="level-card level-card-4" data-level="colors">
+          <div class="level-badge">Kat 4</div>
+          <div class="level-icon" style="background: #a855f7;"><i class="fa-solid fa-palette"></i></div>
+          <h3>Gökkuşağı Kristali</h3>
+          <p>Kırmızı, mavi, sarı ve yeşil kristalleri bularak gökkuşağını parlat!</p>
+          <div class="level-stars" id="stars-level-colors">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
+        <a href="index.html" class="kid-btn secondary-btn" style="text-decoration: none; padding: 10px 24px;">
+          🏫 3 ve 4. Sınıf Oyunlarına Git
+        </a>
+      </div>
+
+      <div class="privacy-note">
+        <i class="fa-solid fa-shield-halved"></i> Görüntünüz hiçbir yere kaydedilmez, sadece cihazınızda işlenir.
+      </div>
+    </div>
+  </div>
+
+  <!-- OYUN İÇİ HEDEF KARTI -->
+  <div id="game-hud" class="game-hud-panel hidden">
+    <div class="target-objective-card">
+      <div class="target-icon" id="target-icon"><i class="fa-solid fa-bullseye"></i></div>
+      <div class="target-details">
+        <h4 id="target-title">Hedef Belirleniyor...</h4>
+        <p id="target-desc">Elini kameraya göster ve oyna!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEBRİK MODALI -->
+  <div id="victory-modal" class="modal-backdrop hidden">
+    <div class="modal-card victory-card">
+      <div class="confetti-cannon-icon">🎉</div>
+      <h2 id="victory-title">Harikasın!</h2>
+      <p id="victory-desc">Bölümü başarıyla tamamladın.</p>
+      
+      <div class="stars-awarded" id="modal-stars-container">
+        <i class="fa-solid fa-star star-anim star-1"></i>
+        <i class="fa-solid fa-star star-anim star-2"></i>
+        <i class="fa-solid fa-star star-anim star-3"></i>
+      </div>
+
+      <div class="victory-score-box">
+        Kazanılan Puan: <span id="modal-score-earned">+300</span>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-replay-level" class="kid-btn secondary-btn">
+          <i class="fa-solid fa-rotate-right"></i> Tekrar
+        </button>
+        <button id="btn-next-level" class="kid-btn primary-btn">
+          Sonraki Kat <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <button id="btn-back-to-map" class="kid-btn success-btn">
+          Harita <i class="fa-solid fa-map"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NASIL OYNANIR MODALI -->
+  <div id="help-modal" class="modal-backdrop hidden">
+    <div class="modal-card help-card">
+      <button class="modal-close-btn" id="btn-close-help">&times;</button>
+      <h2><i class="fa-solid fa-hand"></i> Nasıl Oynanır?</h2>
+      
+      <div class="help-steps">
+        <div class="help-step">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Elini Göster:</strong> Kameraya elini uzat, sarı yıldız elini takip etsin.</div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Meyve veya Harfe Dokun:</strong> Elini nesneye yaklaştır veya parmaklarınla tut!</div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Sepete / Tabağa Bırak:</strong> Nesneyi hedefe taşıyıp elini aç!</div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">4</div>
+          <div class="step-text"><strong>Fare ile de Oynayabilirsin:</strong> Kameran yoksa ekrana tıklayarak da oynayabilirsin!</div>
+        </div>
+      </div>
+
+      <button id="btn-understood-help" class="kid-btn primary-btn full-width">Anladım, Başla! 🚀</button>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT MODÜLLERİ -->
+  <script src="js/audio.js"></script>
+  <script src="js/vision.js"></script>
+  <script src="js/scene3d.js"></script>
+  <script src="js/games/lettersGame.js"></script>
+  <script src="js/games/countingGame.js"></script>
+  <script src="js/games/hygieneGame.js"></script>
+  <script src="js/games/colorsGame.js"></script>
+  <script src="js/app1.js"></script>
+</body>
+</html>
