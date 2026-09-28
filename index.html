@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Maarif3D - 3 ve 4. Sınıf Eğitici Macera Dünyası</title>
+
+  <!-- Google Fonts: Fredoka & Quicksand -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- MediaPipe Hands & Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 3D Three.js Sahnesi -->
+  <div id="canvas-container"></div>
+
+  <!-- Kamera Kutusu (Sağ Alt - Sade ve Güvenli) -->
+  <div id="camera-feed-box" class="camera-card">
+    <video id="webcam-video" playsinline muted autoplay></video>
+    <canvas id="camera-overlay"></canvas>
+    <div class="camera-status-pill" id="cam-status">
+      <span class="status-dot"></span>
+      <span id="cam-status-text">Kamera Aranıyor...</span>
+    </div>
+  </div>
+
+  <!-- ÜST KULLANICI ARAYÜZÜ (HUD - SADELEŞTİRİLMİŞ) -->
+  <header id="app-header">
+    <div class="header-left">
+      <button id="btn-back-menu" class="kid-btn icon-btn" title="Ana Haritaya Dön">
+        <i class="fa-solid fa-house"></i>
+      </button>
+      <div class="stage-badge">
+        <span id="current-stage-title">Maarif Macera Dünyası (3-4. Sınıf)</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="score-pill">
+        <i class="fa-solid fa-star"></i>
+        <span id="hud-score">0</span>
+      </div>
+      <div class="trophy-pill">
+        <i class="fa-solid fa-trophy"></i>
+        <span id="hud-stars">0 / 12</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button id="btn-toggle-sound" class="kid-btn icon-btn" title="Ses">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
+      <button id="btn-toggle-cam" class="kid-btn icon-btn" title="Kamera / Fare">
+        <i class="fa-solid fa-camera"></i>
+      </button>
+      <button id="btn-help" class="kid-btn icon-btn highlight" title="Yardım">
+        <i class="fa-solid fa-question"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- EL HAREKET GÖSTERGESİ -->
+  <div id="gesture-hud" class="gesture-indicator">
+    <span class="gesture-icon" id="gesture-state-icon"><i class="fa-solid fa-hand"></i></span>
+    <span class="gesture-text" id="gesture-state-text">Elini Kameraya Göster</span>
+  </div>
+
+  <!-- ANA MENÜ / KAT SEÇİM HARİTASI -->
+  <div id="menu-overlay" class="overlay-screen active">
+    <div class="menu-content">
+      <div class="hero-banner">
+        <div class="grade-tag">🇹🇷 Türkiye Yüzyılı Maarif Modeli (3 ve 4. Sınıf)</div>
+        <h1>✨ Maarif 3D Macera Dünyası ✨</h1>
+        <p class="subtitle">Kameranı aç, elini salla ve eğlenerek öğrenmeye başla!</p>
+      </div>
+
+      <!-- Seviye Kartları (Büyük, Sade, Kolay Tıklanır) -->
+      <div class="levels-grid">
+        <!-- KAT 1 -->
+        <div class="level-card level-card-1" data-level="waste">
+          <div class="level-badge">Kat 1</div>
+          <div class="level-icon"><i class="fa-solid fa-recycle"></i></div>
+          <h3>Sıfır Atık Ormanı</h3>
+          <p>Plastik, kağıt, cam, organik ve pilleri ayrıştır, doğayı koru!</p>
+          <div class="level-stars" id="stars-level-waste">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+
+        <!-- KAT 2 -->
+        <div class="level-card level-card-2" data-level="values">
+          <div class="level-badge">Kat 2</div>
+          <div class="level-icon"><i class="fa-solid fa-tree"></i></div>
+          <h3>Erdem Ağacı</h3>
+          <p>Vatanseverlik, adalet ve sorumluluk erdemlerini topla, ağacı büyüt!</p>
+          <div class="level-stars" id="stars-level-values">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+
+        <!-- KAT 3 -->
+        <div class="level-card level-card-3" data-level="math">
+          <div class="level-badge">Kat 3</div>
+          <div class="level-icon"><i class="fa-solid fa-shapes"></i></div>
+          <h3>Sihirli Geometri</h3>
+          <p>Küp, silindir, koni, prizmalar ve yüzey özelliklerini keşfet!</p>
+          <div class="level-stars" id="stars-level-math">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+
+        <!-- KAT 4 -->
+        <div class="level-card level-card-4" data-level="gym">
+          <div class="level-badge">Kat 4</div>
+          <div class="level-icon"><i class="fa-solid fa-person-running"></i></div>
+          <h3>Neşeli Jimnastik</h3>
+          <p>3D Robot Dost'un duruşlarını tekrar et, enerjini topla!</p>
+          <div class="level-stars" id="stars-level-gym">
+            <i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>
+          </div>
+          <button class="kid-btn play-btn">Oyna <i class="fa-solid fa-play"></i></button>
+        </div>
+      </div>
+
+      <div class="privacy-note">
+        <i class="fa-solid fa-shield-halved"></i> Görüntünüz hiçbir yere kaydedilmez, sadece cihazınızda işlenir.
+      </div>
+    </div>
+  </div>
+
+  <!-- OYUN İÇİ HEDEF KARTI -->
+  <div id="game-hud" class="game-hud-panel hidden">
+    <div class="target-objective-card">
+      <div class="target-icon" id="target-icon"><i class="fa-solid fa-bullseye"></i></div>
+      <div class="target-details">
+        <h4 id="target-title">Hedef Belirleniyor...</h4>
+        <p id="target-desc">Elini kameraya göster ve oyna!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEBRİK MODALI -->
+  <div id="victory-modal" class="modal-backdrop hidden">
+    <div class="modal-card victory-card">
+      <div class="confetti-cannon-icon">🎉</div>
+      <h2 id="victory-title">Tebrikler!</h2>
+      <p id="victory-desc">Bölümü başarıyla tamamladın.</p>
+      
+      <div class="stars-awarded" id="modal-stars-container">
+        <i class="fa-solid fa-star star-anim star-1"></i>
+        <i class="fa-solid fa-star star-anim star-2"></i>
+        <i class="fa-solid fa-star star-anim star-3"></i>
+      </div>
+
+      <div class="victory-score-box">
+        Kazanılan Puan: <span id="modal-score-earned">+300</span>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-replay-level" class="kid-btn secondary-btn">
+          <i class="fa-solid fa-rotate-right"></i> Tekrar
+        </button>
+        <button id="btn-next-level" class="kid-btn primary-btn">
+          Sonraki Kat <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <button id="btn-back-to-map" class="kid-btn success-btn">
+          Harita <i class="fa-solid fa-map"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NASIL OYNANIR MODALI -->
+  <div id="help-modal" class="modal-backdrop hidden">
+    <div class="modal-card help-card">
+      <button class="modal-close-btn" id="btn-close-help">&times;</button>
+      <h2><i class="fa-solid fa-hand"></i> Nasıl Oynanır?</h2>
+      
+      <div class="help-steps">
+        <div class="help-step">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Elini Göster:</strong> Kameraya elini uzat, ekrandaki sarı yıldız elini takip etsin.</div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Nesneyi Yakala:</strong> Elini nesneye yaklaştır veya parmaklarını birleştirip (pinch) tut!</div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Hedefe Bırak:</strong> Nesneyi kutuya veya ağaca taşıyıp elini aç!</div>
+        </div>
+        <div class="help-step">
+          <div class="step-num">4</div>
+          <div class="step-text"><strong>Fare ile de Oynayabilirsin:</strong> Kameran yoksa ekrana tıklayarak ve sürükleyerek de oynayabilirsin!</div>
+        </div>
+      </div>
+
+      <button id="btn-understood-help" class="kid-btn primary-btn full-width">Anladım, Başla! 🚀</button>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT MODÜLLERİ -->
+  <script src="js/audio.js"></script>
+  <script src="js/vision.js"></script>
+  <script src="js/scene3d.js"></script>
+  <script src="js/games/wasteGame.js"></script>
+  <script src="js/games/valuesGame.js"></script>
+  <script src="js/games/mathGame.js"></script>
+  <script src="js/games/gymGame.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
